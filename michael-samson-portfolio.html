@@ -716,7 +716,7 @@ function addBub(role,txt){
 
 
 // CONTACT FORM
-const BACKEND_URL = 'http://localhost:3001'; // Change to your deployed backend URL in production
+const BACKEND_URL = window.location.origin; // Use current origin when frontend and backend share the same host. If hosted separately, replace with your backend URL.
 
 async function submitContact() {
   const name    = document.getElementById('cf-name').value.trim();
