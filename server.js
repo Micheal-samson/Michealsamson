@@ -2,6 +2,9 @@ require('dotenv').config();
 const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
+if (typeof globalThis.WebSocket === 'undefined') {
+  globalThis.WebSocket = require('ws');
+}
 const { createClient } = require('@supabase/supabase-js');
 
 const app = express();
