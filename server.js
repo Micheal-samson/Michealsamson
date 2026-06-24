@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const nodemailer = require('nodemailer');
 const cors = require('cors');
+const path = require('path');
 if (typeof globalThis.WebSocket === 'undefined') {
   globalThis.WebSocket = require('ws');
 }
@@ -14,6 +15,10 @@ const PORT = process.env.PORT || 3001;
 app.use(cors({ origin: process.env.ALLOWED_ORIGIN || '*' }));
 app.use(express.json());
 app.use(express.static(__dirname));
+
+app.get('/', (_, res) => {
+  res.sendFile(path.join(__dirname, 'michael-samson-portfolio.html'));
+});
 
 // ─── Supabase ─────────────────────────────────────────────────
 const supabase = createClient(
