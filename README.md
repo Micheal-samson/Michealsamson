@@ -23,7 +23,12 @@ npm install
 ```bash
 cp .env.example .env
 ```
-Then fill in `.env`:
+Every key is optional — the server always boots:
+
+- **No `GROQ_API_KEY`** → `/api/chat` answers from a built-in set of portfolio answers instead of failing.
+- **No email / Supabase keys** → contact messages are appended to `messages.jsonl` in this folder so nothing is lost.
+
+Fill in `.env` when you want live AI and real delivery:
 
 | Variable | Where to get it |
 |---|---|
@@ -73,19 +78,32 @@ Returns `{ "status": "ok" }` — useful for uptime monitoring.
 
 ## Deploying to production
 
-**Recommended: [Railway](https://railway.app)** (free tier, easy Node.js deploys)
+### Render (current host)
+The page and the API are served by the same Express process, so the chat and contact form work
+on the Render URL with no extra config — the browser calls `/api/*` on its own origin.
 
-1. Push this folder to a GitHub repo
-2. Connect repo to Railway → it auto-detects Node and runs `npm start`
-3. Add your `.env` variables in Railway's environment settings
-4. Copy the Railway URL and update `BACKEND_URL` in your portfolio HTML
+1. Render → **New → Web Service**, connect the GitHub repo (or deploy the folder as a Docker service;
+   the `Dockerfile` is included).
+2. Settings: **Build** `npm ci --omit=dev`, **Start** `npm start`, **Health check path** `/api/health`.
+3. Add the environment variables below in Render → **Environment**.
+4. The server binds `0.0.0.0` automatically on Render (`RENDER=true` is set by the platform) and
+   listens on the `PORT` Render assigns.
 
-Other options: Render, Fly.io, Heroku, or a VPS.
+Deploy the **whole folder** — `shots/*.jpg`, `about-portrait.png`, `taish-poster.jpg` and
+`taish-web.mp4` are referenced by the page. A repo without them shows broken cards.
+
+Render's disk is ephemeral: `messages.jsonl` survives only until the next deploy/restart. Set the
+Supabase keys so messages are actually stored, or they disappear with the container.
+
+Other options: Railway, Fly.io, or a VPS — any of them work as long as the process listens on
+`0.0.0.0:$PORT`.
 
 ---
 
 ## Portfolio HTML
-In `michael-samson-portfolio.html`, update this line to your deployed backend URL:
-```js
-const BACKEND_URL = 'http://localhost:3001'; // ← change this
+When the page is served by `server.js`, `/api/chat` and `/api/contact` resolve against the same origin and no change is needed.
+
+If you host the HTML somewhere else (GitHub Pages, Netlify), point it at the deployed backend before the main `<script>` runs:
+```html
+<script>window.PORTFOLIO_BACKEND = 'https://your-backend.up.railway.app';</script>
 ```

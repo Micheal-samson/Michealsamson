@@ -5,3 +5,21 @@ npm-debug.log
 .vscode/
 .idea/
 *.log
+
+# local contact messages when Supabase/email are not configured
+messages.jsonl
+backend.log
+backend.pid
+
+# local preview / deploy helpers
+.preview-static.js
+.preview.log
+.preview.pid
+site/
+
+# raw source media (the page only uses the -web / poster files)
+Personal Portfolio Website.mp4
+mikeyk-web.mp4
+about-portrait.jpg
+723d55d3cc176df7e3677153bb368ecf.jpg
+quality_restoration_20261107131253064.jpg
