@@ -2,6 +2,8 @@
 
 Express + Nodemailer + Supabase backend for the contact form.
 
+**Live:** https://michealsamson.onrender.com — the page and the API are served together by this Express app.
+
 ---
 
 ## Stack
@@ -79,8 +81,8 @@ Returns `{ "status": "ok" }` — useful for uptime monitoring.
 ## Deploying to production
 
 ### Render (current host)
-The page and the API are served by the same Express process, so the chat and contact form work
-on the Render URL with no extra config — the browser calls `/api/*` on its own origin.
+The page and the API are served by the same Express process at https://michealsamson.onrender.com,
+so the chat and contact form work with no extra config — the browser calls `/api/*` on its own origin.
 
 1. Render → **New → Web Service**, connect the GitHub repo (or deploy the folder as a Docker service;
    the `Dockerfile` is included).
@@ -105,5 +107,5 @@ When the page is served by `server.js`, `/api/chat` and `/api/contact` resolve a
 
 If you host the HTML somewhere else (GitHub Pages, Netlify), point it at the deployed backend before the main `<script>` runs:
 ```html
-<script>window.PORTFOLIO_BACKEND = 'https://your-backend.up.railway.app';</script>
+<script>window.PORTFOLIO_BACKEND = 'https://michealsamson.onrender.com';</script>
 ```
