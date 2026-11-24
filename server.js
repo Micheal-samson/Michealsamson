@@ -213,15 +213,20 @@ app.post('/api/chat', async (req, res) => {
       `data: ${JSON.stringify({ type: 'content_block_delta', delta: { type: 'text_delta', text } })}\n\n`
     );
 
-  // No API key yet → answer locally instead of failing the chat.
-  if (!process.env.GROQ_API_KEY) {
+  // Answer from the built-in replies so the chat never dead-ends on a visitor.
+  const streamFallback = async () => {
     const reply = fallbackReply(prompt);
     for (const chunk of reply.match(/.{1,14}/g) || [reply]) {
       sendDelta(chunk);
       await new Promise((r) => setTimeout(r, 18));
     }
     res.write('data: [DONE]\n\n');
-    return res.end();
+    res.end();
+  };
+
+  // No API key yet → answer locally instead of failing the chat.
+  if (!process.env.GROQ_API_KEY) {
+    return streamFallback();
   }
 
   try {
@@ -232,7 +237,8 @@ app.post('/api/chat', async (req, res) => {
         'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        // llama-3.3-70b-versatile was retired for self-serve plans on 2026-08-16.
+        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
         max_tokens: 1000,
         stream: true,
         messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages.slice(-20)],
@@ -241,9 +247,9 @@ app.post('/api/chat', async (req, res) => {
 
     if (!upstream.ok) {
       const err = await upstream.text();
-      console.error('Groq error:', err);
-      res.write(`data: ${JSON.stringify({ error: 'AI service error.' })}\n\n`);
-      return res.end();
+      console.error('Groq error:', upstream.status, err);
+      // Retired model, rate limit or bad key → still answer from the built-in replies.
+      return streamFallback();
     }
 
     const reader = upstream.body.getReader();
@@ -276,8 +282,8 @@ app.post('/api/chat', async (req, res) => {
     res.end();
   } catch (err) {
     console.error('Chat error:', err.message);
-    res.write(`data: ${JSON.stringify({ error: 'Connection error.' })}\n\n`);
-    res.end();
+    // Nothing reached the browser yet → answer from the built-in replies.
+    return streamFallback();
   }
 });
 

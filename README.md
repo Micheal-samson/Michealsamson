@@ -28,12 +28,14 @@ cp .env.example .env
 Every key is optional — the server always boots:
 
 - **No `GROQ_API_KEY`** → `/api/chat` answers from a built-in set of portfolio answers instead of failing.
+  The same fallback covers a rejected key, a rate limit or a retired model, so the chat never dead-ends.
 - **No email / Supabase keys** → contact messages are appended to `messages.jsonl` in this folder so nothing is lost.
 
 Fill in `.env` when you want live AI and real delivery:
 
 | Variable | Where to get it |
 |---|---|
+| `GROQ_API_KEY` | Groq console → API Keys, for live chat answers (optional; `GROQ_MODEL` overrides the default `openai/gpt-oss-120b`) |
 | `EMAIL_USER` | Your Gmail address |
 | `EMAIL_PASS` | Gmail App Password — [generate here](https://myaccount.google.com/apppasswords) (needs 2FA enabled) |
 | `EMAIL_TO` | Where notifications land (your email) |
