@@ -184,6 +184,10 @@ const FALLBACKS = [
   },
 ];
 
+const GROQ_MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+// Last upstream failure (HTTP status or 'network') so /api/health can show why chat fell back.
+let lastChatError = null;
+
 function fallbackReply(text) {
   const hit = FALLBACKS.find((f) => f.match.test(text));
   return (
@@ -238,7 +242,7 @@ app.post('/api/chat', async (req, res) => {
       },
       body: JSON.stringify({
         // llama-3.3-70b-versatile was retired for self-serve plans on 2026-08-16.
-        model: process.env.GROQ_MODEL || 'openai/gpt-oss-120b',
+        model: GROQ_MODEL,
         max_tokens: 1000,
         stream: true,
         messages: [{ role: 'system', content: SYSTEM_PROMPT }, ...messages.slice(-20)],
@@ -247,10 +251,12 @@ app.post('/api/chat', async (req, res) => {
 
     if (!upstream.ok) {
       const err = await upstream.text();
+      lastChatError = upstream.status;
       console.error('Groq error:', upstream.status, err);
       // Retired model, rate limit or bad key → still answer from the built-in replies.
       return streamFallback();
     }
+    lastChatError = null;
 
     const reader = upstream.body.getReader();
     const decoder = new TextDecoder();
@@ -282,6 +288,7 @@ app.post('/api/chat', async (req, res) => {
     res.end();
   } catch (err) {
     console.error('Chat error:', err.message);
+    lastChatError = 'network';
     // Nothing reached the browser yet → answer from the built-in replies.
     return streamFallback();
   }
@@ -293,6 +300,7 @@ app.get('/api/health', (_, res) =>
     status: 'ok',
     ts: new Date().toISOString(),
     ai: Boolean(process.env.GROQ_API_KEY),
+    chat: { model: GROQ_MODEL, lastError: lastChatError },
     email: Boolean(transporter),
     database: Boolean(supabase),
   })
